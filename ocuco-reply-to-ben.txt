@@ -1,0 +1,28 @@
+Hi Ben,
+
+Thanks for confirming the firewall rules are in place. We've discovered an important discrepancy that needs clarifying:
+
+**CRITICAL ISSUE**: Our network scan shows the Ocuco Innovation API is currently running on **192.168.50.10** (the live server in the old office). However, the firewall rules you configured point to **192.168.50.13** (CUBITTS-APP01, the backup server in the new office).
+
+Before we proceed with testing, we need to know:
+
+1. **Firewall Rules Target**
+   - Should the firewall rules be updated to point to **192.168.50.10** (where Ocuco is currently running)?
+   - Or should we move the Ocuco API from the live server (192.168.50.10) to the backup server (192.168.50.13)?
+
+2. **API Port**
+   - What port is Ocuco listening on? (Default is 8090, but we need confirmation)
+   - Should we test against port 80, 443, or 8090 through the external firewall?
+
+3. **SSL/TLS Certificate**
+   - We'll need an SSL/TLS certificate for external HTTPS access. Should we provide this, or do you have a preferred approach?
+
+4. **Next Steps**
+   - Once the server/firewall discrepancy is resolved, we'll run connectivity tests from our AWS environment
+   - We'll validate routing through the WAN IP (158.41.81.58) to the correct internal server
+   - We'll test the actual Ocuco API endpoints to confirm end-to-end integration
+
+Please clarify which server the firewall rules should point to and confirm the API port. Once we have this, we can proceed with comprehensive connectivity testing.
+
+Best regards,
+Dan
