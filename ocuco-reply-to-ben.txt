@@ -11,8 +11,9 @@ Before we proceed with testing, we need to know:
    - Or should we move the Ocuco API from the live server (192.168.50.10) to the backup server (192.168.50.13)?
 
 2. **API Port**
-   - What port is Ocuco listening on? (Default is 8090, but we need confirmation)
-   - Should we test against port 80, 443, or 8090 through the external firewall?
+   - Per Ocuco's integration guide, the default port is **8090**, but **port 443 is recommended** for improved compatibility and security
+   - Which port should Ocuco be configured to listen on?
+   - Should we configure the firewall for port 443 (preferred) or port 8090 (default)?
 
 3. **SSL/TLS Certificate**
    - We'll need an SSL/TLS certificate for external HTTPS access. Should we provide this, or do you have a preferred approach?
