@@ -35,7 +35,33 @@ New extension `extensions/order-delay-notice`:
 
 Rollout:
 - v269 deployed with the toggle **off by default** (safe — renders nothing until enabled).
-- v270 deployed with `delayNoticeEnabled` `default = true` so the banner shows in production automatically (these order-status blocks render without manual editor placement).
+- v270 deployed with `delayNoticeEnabled` `default = true`.
+
+## Admin configuration (per store)
+
+The block is **not** auto-rendered. Customer-account `order-status.block.render` extensions must be **placed manually** in the editor, exactly like the existing `Order Prescription – Order Status` block:
+
+1. Shopify admin → **Settings → Customer accounts → Customize**
+2. Switch the page selector to the **Order** (order status) page
+3. **Add block → Order Delay Notice** (under Apps), drag to the top of Main
+4. In the block settings: set **Show delay notice = True** and paste the message
+5. **Save**
+
+This must be repeated **per store** (staging and production separately) — placement does not transfer with the app deploy.
+
+### Canonical copy (match the checkout banner)
+
+The existing cart/checkout delay message is a **Shopify-native "Static content" block** with **content type "critical banner"** in the Checkout 3.0 editor (it is NOT a custom extension). Its live wording is:
+
+> From the 5th to the 15th June 2026, we're settling into a new workshop space. As a result, some orders may take up to 5 working days longer than usual.
+
+The Order Delay Notice message should be set to this exact text so the two surfaces stay consistent (note: leads with the dates and uses "As a result…", differing from the toml's placeholder default).
+
+### Open follow-ups
+
+- **Check for a native block on order status**: if the order-status editor's Add block list offers a native "Static content"/banner (like checkout's critical banner), it could replace the custom extension entirely and match checkout styling exactly — at which point the custom `order-delay-notice` extension should be deleted. The checkout Static content block is checkout-specific, so it likely is **not** available on the order-status surface; pending confirmation from the Add block list.
+- **Tone match**: the custom banner is `tone="warning"` (amber); the checkout banner is "critical" (pink). If we keep the custom block, switch to `tone="critical"` + redeploy to match the checkout look.
+- **Code default drift**: the toml `default` for `delayNoticeMessage` carries the earlier draft wording. It's cosmetic (the editor does not pre-fill from it; the merchant-entered value is authoritative), but worth aligning to the canonical copy on the next redeploy.
 
 ## Files Modified
 
@@ -57,6 +83,9 @@ Rollout:
 
 ## Prevention / Future Reference
 
+- **Order-status blocks are NOT auto-placed.** Customer-account `order-status.block.render` extensions must be manually added in the customer account editor (Add block) per store; releasing the app version is not enough to make them appear. (Initial assumption that they auto-render was wrong — corrected during the admin walkthrough.)
+- **`default` does not pre-fill the editor.** A settings field `default` in the toml does not populate the customer-account editor field — it shows the stored/unset value (boolean → False, text → empty). The merchant must explicitly set values; the entered value is authoritative. So `default = true`/default message are effectively cosmetic for this surface.
+- **The cart/checkout delay banner is a native block, not code.** It is a Shopify "Static content" block (content type "critical banner") in the Checkout 3.0 editor — no extension involved. Before building a custom extension for a banner, check whether the target surface offers a native Static content/banner block.
 - **Empty default locale fails deploy.** A `locales/en.default.json` of `{}` fails `shopify app deploy` with `localization: Locale data for 'en' is empty`. Extensions with no i18n strings should ship **no** locales dir (matches `order-estimate`), not an empty file.
 - **Single app, single release.** This repo has one app config (`Cubitts Account Extensions`, client_id `f33c34f5…`); there is no separate staging app/toml. `shopify app deploy` creates one version released to whatever store(s) the app is installed on — there is no staging-only release. The true non-prod preview path is `shopify app dev` against a dev store (dev store was "Not yet configured").
 - **`uid` placement.** The Shopify CLI may write the CLI-assigned `uid` at the top level of the toml; the repo convention keeps it **inside** the `[[extensions]]` block (matches siblings).
