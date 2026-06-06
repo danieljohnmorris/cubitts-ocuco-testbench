@@ -46,8 +46,18 @@ The handler early-returned when there were zero orphan jobs, silently skipping *
 
 The lab_send_failed reset is the only new production write and ships **OFF** (`SHOPIFY_AUTOFIX_ENABLED` not `'true'` on the construct). Merging deployed it dormant.
 
-## Follow-ups (not done)
+## Deploy + live verification
 
-- **Enable the lab_send_failed auto-fix**: set `autoFixEnabled: true` in `innovationsSync-stack.ts`, deploy, watch a few cycles for `lab_send_failed reset` log lines.
-- **Step D end-state**: flip `/check-orders` default to invoke the Lambda and retire the `--local` battery, once this has soaked.
-- **Handler-level test**: the entrypoint orchestration (early-exit-removed path + `usedSlots` cap wiring) has no handler test — pre-existing posture, but more consequential now. Needs a DI refactor of the handler; deferred.
+Deployed via CodePipeline (`InnovationsSyncCDPipeline`), Lambda updated 2026-06-06 12:26 UTC. **Correction to an earlier mischaracterisation:** the auto-fix was NOT dormant — the stack already has `autoFixEnabled: true` (`innovationsSync-stack.ts:362`), so the new lab_send_failed reset went live with this deploy.
+
+First live cycle (13:01 UTC) confirmed clean:
+- `labSendFailedReset: { sent: 6, failed: 0, requeueFailed: 0, skippedOverCap: 0, skippedNotStuck: 0 }` — all 6 generic lab_send_failed orders reset cleanly.
+- `untaggedScanDegraded: false` (was `true` every run before — gap 2 fix confirmed).
+- `scanDegraded: null` — no scan errored.
+
+**Shared-cap note:** lab_send_failed reset budget = `25 − (noMei.sent + noOms.sent)`. On a high no-MEI/no-OMS backlog cycle the reset can get 0 budget and defer (orders stay Slack-escalated and drain later). Observed once (saturated at 25) before the backlog drained to 10. Acceptable; revisit (raise cap / dedicated budget) only if resets are seen starving for many consecutive cycles.
+
+## Follow-ups
+
+- **Handler-level orchestration test** — DONE in [#342](https://github.com/Cubitts-KX/operations-management-system/pull/342) (MERGED): `checkOrdersSweep.test.ts` locks the early-exit-removed path + `usedSlots` shared-cap wiring (+ flag-off no-write). Also made `SYLIUS_SCAN_RETRY_BACKOFF_MS` env-overridable so the test doesn't sleep.
+- **Step D end-state (not done)**: flip `/check-orders` default to invoke the Lambda and retire the `--local` battery, once this has soaked over a few more clean cycles.
